@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserCreate(BaseModel):
-    name: str
+    username: str
     email: EmailStr
     password: str
     model_config = ConfigDict(from_attributes=True)
@@ -18,3 +20,14 @@ class UserDB(UserCreate):
 
 class Users(BaseModel):
     usuarios: list[User]
+
+
+class Profissional(BaseModel):
+    nome: str
+    numero_conselho: str
+    data_desligamento: datetime | None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Profissionais(BaseModel):
+    profissionais: list[Profissional]
