@@ -6,7 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .database import get_db
-from .models import User
+from .models import Profissional, User
+from .schemas import Profissionais as schema_profissionais
+from .schemas import Profissional as schema_profissional
 from .schemas import User as schema_use
 from .schemas import UserCreate
 from .schemas import Users as schema_users
@@ -52,3 +54,42 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 def get_users(db: Session = Depends(get_db)):
     usuarios = db.scalars(select(User)).all()
     return {'usuarios': usuarios}
+
+
+@app.post(
+    '/criar_profissional',
+    response_model=Profissional,
+    status_code=HTTPStatus.CREATED,
+)
+def cadastrar_profissional(
+    profissional: schema_profissional, db: Session = Depends(get_db)
+):
+    profissional_cadastrado = db.scalar(
+        select(Profissional).where(
+            profissional.numero_conselho == Profissional.numero_conselho
+        )
+    )
+    if profissional_cadastrado:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Profissional ja cadastrado',
+        )
+    profissional_cadastrar = Profissional(
+        nome=profissional.nome,
+        numero_conselho=profissional.numero_conselho,
+        data_desligamento=None,
+    )
+    db.add(profissional_cadastrar)
+    db.commit()
+    db.refresh(profissional_cadastrar)
+    return profissional_cadastrar
+
+
+@app.get(
+    '/profissionais',
+    status_code=HTTPStatus.OK,
+    response_model=schema_profissionais,
+)
+def profissionais(db: Session = Depends(get_db)):
+    profissionais = db.scalars(select(Profissional)).all()
+    return {'profissionais': profissionais}

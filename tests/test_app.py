@@ -39,6 +39,6 @@ def test_cadastrar_profissional(cliente):
 
 
 def test_profissionais_cadatrados(cliente):
-    profissionais = cliente.get('/proficionais')
+    profissionais = cliente.get('/profissionais')
     status = HTTPStatus.OK
     assert profissionais.status_code == status
