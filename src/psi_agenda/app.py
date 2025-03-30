@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,11 +10,31 @@ from .database import get_db
 from .models import Profissional, User
 from .schemas import Profissionais as schema_profissionais
 from .schemas import Profissional as schema_profissional
+from .schemas import Token, UserCreate
 from .schemas import User as schema_use
-from .schemas import UserCreate
 from .schemas import Users as schema_users
+from .security import atribuir_hash, criar_acesso_token, verificar_senha
 
 app = FastAPI()
+
+
+@app.post('/token-access', response_model=Token)
+def token(
+    user_dados: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    email = user_dados.username
+    passw = user_dados.password
+    db_dados = db.scalar(select(User).where(User.email == email))
+    aut_user = verificar_senha(passw, db_dados.password)
+    if not aut_user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Usuario ou senha invalida',
+        )
+
+    acess_de_acesso = criar_acesso_token(dados={'sub': email})
+    return {'access_token': acess_de_acesso, 'type_token': 'bearer'}
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_class=HTMLResponse)
@@ -40,9 +61,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Usuario já cadastrado'
         )
-    usuario = User(
-        username=user.username, password=user.password, email=user.email
-    )
+    pass_db = atribuir_hash(user.password)
+    usuario = User(username=user.username, password=pass_db, email=user.email)
     db.add(usuario)
     db.commit()
     db.refresh(usuario)

@@ -31,3 +31,8 @@ class Profissional(BaseModel):
 
 class Profissionais(BaseModel):
     profissionais: list[Profissional]
+
+
+class Token(BaseModel):
+    access_token: str
+    type_token: str

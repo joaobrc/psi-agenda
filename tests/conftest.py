@@ -6,7 +6,8 @@ from sqlalchemy.pool import StaticPool
 
 from src.psi_agenda.app import app
 from src.psi_agenda.database import get_db
-from src.psi_agenda.models import table_registro
+from src.psi_agenda.models import User, table_registro
+from src.psi_agenda.security import atribuir_hash
 
 
 @pytest.fixture
@@ -31,3 +32,18 @@ def sessao_sql():
     with Session(engine_sql) as sessao_sql:
         yield sessao_sql
     table_registro.metadata.drop_all(engine_sql)
+
+
+@pytest.fixture
+def usuario_teste(sessao_sql):
+    passwd_teste = '123456'
+    usuario_cad_teste = User(
+        username='joao',
+        email='joao@teste.com',
+        password=atribuir_hash(passwd_teste),
+    )
+    sessao_sql.add(usuario_cad_teste)
+    sessao_sql.commit()
+    sessao_sql.refresh(usuario_cad_teste)
+    usuario_cad_teste.senha_limpa = passwd_teste
+    return usuario_cad_teste

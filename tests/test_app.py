@@ -7,6 +7,18 @@ def test_hello_word(cliente):
     assert requisicao.status_code == status
 
 
+def test_capturar_token(cliente, usuario_teste):
+    resposta_requisicao = cliente.post(
+        '/token-access',
+        data={
+            'username': 'joao@teste.com',
+            'password': usuario_teste.senha_limpa,
+        },
+    )
+    token = resposta_requisicao.json()
+    assert 'access_token' in token
+
+
 def test_criar_usuario(cliente):
     usuario_a_criar = {
         'username': 'Joao',
